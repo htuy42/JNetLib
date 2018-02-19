@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/jnet.iml" filepath="$PROJECT_DIR$/.idea/modules/jnet.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/jnet_main.iml" filepath="$PROJECT_DIR$/.idea/modules/jnet_main.iml" group="jnet" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/jnet_test.iml" filepath="$PROJECT_DIR$/.idea/modules/jnet_test.iml" group="jnet" />
+    </modules>
+  </component>
+</project>
