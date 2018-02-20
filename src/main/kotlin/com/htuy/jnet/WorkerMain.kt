@@ -1,25 +1,28 @@
 package com.htuy.jnet
 
 import com.htuy.jnet.agents.Client
-import com.htuy.jnet.messages.DoRequestedWorkHandler
-import com.htuy.jnet.messages.MessageHandler
-import com.htuy.jnet.messages.ObeyLifecycleRequestHandler
+import com.htuy.jnet.messages.*
 import com.htuy.jnet.modules.ModuleManager
 import com.htuy.jnet.modules.ModuleMessageLoadHandler
 import com.htuy.jnet.modules.SiteInstaller
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 fun main(args: Array<String>) {
     val hostAddr: String = args[0]
     val port: Int = args[1].toInt()
     val password = args[2]
     val moduleManager = ModuleManager("modules/", SiteInstaller())
-
+    val numProcessors = Runtime.getRuntime().availableProcessors()
+    val pool = Executors.newFixedThreadPool(numProcessors)
     val messageHandles: List<MessageHandler> = listOf(ModuleMessageLoadHandler(moduleManager),
                                                       ObeyLifecycleRequestHandler(),
-                                                      DoRequestedWorkHandler())
+                                                      MultiDoRequestedWorkHandler(pool))
 
 
-    val worker = Client(hostAddr, port, messageHandles, password = password)
+    val worker = Client(hostAddr, port, messageHandles, initFunction = {ctx ->
+        ctx.writeAndFlush(WorkerPowerMessage(numProcessors))
+    }, password = password)
     worker.connect()
             .sync()
             .channel()

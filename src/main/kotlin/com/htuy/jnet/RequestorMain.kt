@@ -1,9 +1,7 @@
 package com.htuy.jnet
 
 import com.htuy.jnet.agents.Client
-import com.htuy.jnet.messages.GenericErrorHandler
-import com.htuy.jnet.messages.ModuleMessage
-import com.htuy.jnet.messages.RequestWorkReceipt
+import com.htuy.jnet.messages.*
 import com.htuy.jnet.modules.ModuleManager
 import com.htuy.jnet.modules.SiteInstaller
 import com.htuy.kt.stuff.REPL
@@ -24,15 +22,18 @@ fun runRequestorREPL(client: Client) {
         }
     })
 
-    registry.stringRegister("remote_install", {
-        val toInstall = it.split(" ")
-        client.sendMessage(ModuleMessage(toInstall))
+    registry.stringRegister("remote_shutdown", {
+        client.sendMessage(LifecycleMessage(LifecycleEvent.SHUTDOWN))
     })
 
     registry.stringRegister("global_install", {
-        val toInstall = it.split(" ")
-        client.sendMessage(ModuleMessage(toInstall))
-        moduleManager.loadAsNeeded(toInstall)
+        val input = it.split(" ")
+        val update = it.split(" ")[0] == "update"
+        if (update) {
+            input.drop(1)
+        }
+        client.sendMessage(ModuleMessage(input,update))
+        moduleManager.loadAsNeeded(input, false)
     })
 
 

@@ -8,6 +8,8 @@ import java.net.URLClassLoader
 interface ModuleInstaller {
     fun install(toInstall: String,
                 pathToModules: String)
+
+    fun update(toUpdate : String, pathToModules: String)
 }
 
 fun loadLibraryFromJar(path: String) {
@@ -27,11 +29,22 @@ class SiteInstaller : ModuleInstaller {
         loadLibraryFromJar(downloadJar(toInstall, pathToModules))
     }
 
+    override fun update(toUpdate: String, pathToModules: String) {
+        loadLibraryFromJar(downloadJar(toUpdate,pathToModules,force = true))
+    }
+
     fun downloadJar(toInstall: String,
-                    pathToModules: String): String {
+                    pathToModules: String,
+                    force : Boolean = false): String {
+        val path = pathToModules + "$toInstall.jar"
+        val outFile = File(path)
+        if(!force){
+            if(outFile.exists()){
+                return path
+            }
+        }
         javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier { hostname, sslSession -> true }
-        val outFile = File(pathToModules + "$toInstall.jar")
         FileUtils.copyURLToFile(URL(SITE_BASE_URL + "$toInstall.jar"), outFile)
-        return "modules/$toInstall.jar"
+        return path
     }
 }

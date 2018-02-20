@@ -1,6 +1,5 @@
 package com.htuy.jnet.messages
 
-import com.htuy.kt.stuff.FunctionFactory
 import io.netty.channel.ChannelHandlerContext
 
 
@@ -28,20 +27,3 @@ class MessageTypeFunHandler<T>(private val type: Class<out T>,
 
 
 }
-
-interface LifecycleHandler {
-    fun handle(ctx: ChannelHandlerContext)
-}
-
-class LambdaLifecycleHandler(val lam: (ChannelHandlerContext) -> Unit) : LifecycleHandler {
-    override fun handle(ctx: ChannelHandlerContext) {
-        lam(ctx)
-    }
-}
-
-class NullHandler : LifecycleHandler {
-    override fun handle(ctx: ChannelHandlerContext) {}
-}
-
-
-val NullHandlerFactory = FunctionFactory({ NullHandler() })

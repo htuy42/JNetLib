@@ -13,7 +13,7 @@ class ModuleMessageLoadHandler(val manager: ModuleManager)
     override fun handle(ctx: ChannelHandlerContext,
                         msg: Any?) {
         msg as ModuleMessage
-        manager.loadAsNeeded(msg.moduleNames)
+        manager.loadAsNeeded(msg.moduleNames,msg.update)
     }
 
     override fun handles(msg: Any?): Boolean {
@@ -37,11 +37,11 @@ class ModuleManager(val modulesLocalLocation: String,
 
     val moduleObjects = HashMap<String, Module>()
 
-    fun loadAsNeeded(toLoad: List<String>) {
+    fun loadAsNeeded(toLoad: List<String>,update : Boolean) {
         toLoad
-                .filterNot { loadedModules.contains(it) }
+                .filterNot { loadedModules.contains(it) && !update }
                 .forEach {
-                    installModuleIfNeeded(it, modulesFetcher, modulesLocalLocation)
+                    installModuleIfNeeded(it, modulesFetcher, modulesLocalLocation,update)
                     loadedModules.add(it)
                 }
     }
@@ -50,7 +50,7 @@ class ModuleManager(val modulesLocalLocation: String,
         if (moduleObjects.containsKey(moduleName)) {
             return moduleObjects.get(moduleName)!!
         }
-        loadAsNeeded(listOf(moduleName))
+        loadAsNeeded(listOf(moduleName),false)
         val moduleKclass = Class.forName(REQUIRED_PACKAGE_NAME + "${moduleName}Module")
                 .kotlin
         val moduleObject = moduleKclass.primaryConstructor?.call()

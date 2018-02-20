@@ -1,28 +1,26 @@
 package com.htuy.jnet.agents
 
-import com.htuy.jnet.messages.LifecycleHandler
-import com.htuy.jnet.messages.Message
-import com.htuy.jnet.messages.MessageHandler
-import com.htuy.jnet.messages.NullHandler
+import com.htuy.jnet.messages.*
 import com.htuy.kt.stuff.LOGGER
 import io.netty.bootstrap.Bootstrap
-import io.netty.channel.Channel
-import io.netty.channel.ChannelFuture
-import io.netty.channel.ChannelInitializer
-import io.netty.channel.ChannelOption
+import io.netty.channel.*
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.codec.serialization.ClassResolvers
 import io.netty.handler.codec.serialization.ObjectDecoder
 import io.netty.handler.codec.serialization.ObjectEncoder
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
+import java.util.logging.Logger
 
 class Client(val hostAddr: String,
              val port: Int,
              val messageHandles: List<MessageHandler>,
-             val initFunction: LifecycleHandler = NullHandler(),
-             val cleanupFunction: LifecycleHandler = NullHandler(),
-             val password: String = "ADMINPASS123") {
+             val initFunction: (ChannelHandlerContext) -> Unit = {},
+             val cleanupFunction: (ChannelHandlerContext) -> Unit = {},
+             val password: String = "ADMINPASS123",
+             val heartbeatFrequencyMillis : Int = -1) {
 
     var channel: Channel? = null
     val workerGroup = NioEventLoopGroup()
@@ -52,7 +50,20 @@ class Client(val hostAddr: String,
             LOGGER.error("Connect failed ith some error. Channel failure : $res")
         }
         channel = res.channel()
+        if(heartbeatFrequencyMillis != -1){
+            startHeartbeats()
+        }
         return res
+    }
+
+    fun startHeartbeats(){
+        launch {
+            while(channel?.isOpen ?: false){
+                delay(heartbeatFrequencyMillis)
+                LOGGER.trace{"Sending heartbeat"}
+                sendMessage(HeartbeatMessage())
+            }
+        }
     }
 
     fun sendMessage(message: Message) {
@@ -69,6 +80,7 @@ class Client(val hostAddr: String,
 
     fun shutdown(){
         workerGroup.shutdownGracefully()
+        channel?.close()
     }
 }
 

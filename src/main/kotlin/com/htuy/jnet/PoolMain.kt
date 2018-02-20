@@ -4,6 +4,6 @@ import com.htuy.jnet.agents.Pool
 
 
 fun main(args: Array<String>) {
-    val pool: Pool = Pool(1234, 8765)
+    val pool: Pool = Pool(1234, 5678)
     pool.launch()
 }

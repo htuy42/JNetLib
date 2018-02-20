@@ -40,12 +40,16 @@ fun checkForModule(moduleName: String): Boolean {
 
 fun installModuleIfNeeded(moduleName: String,
                           installer: ModuleInstaller,
-                          pathToModules: String) {
-    if (checkForModule(moduleName)) {
-        return
+                          pathToModules: String,
+                          update : Boolean) {
+    if(update){
+        installer.update(moduleName,pathToModules)
     }
-    installer.install(moduleName, pathToModules)
-    if (!checkForModule(moduleName)) {
-        throw IllegalStateException("Failed to install module $moduleName")
+    else if(!checkForModule(moduleName)){
+        installer.install(moduleName, pathToModules)
+        if (!checkForModule(moduleName)) {
+            throw IllegalStateException("Failed to install module $moduleName")
+        }
     }
+
 }

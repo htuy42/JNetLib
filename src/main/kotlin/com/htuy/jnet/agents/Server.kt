@@ -1,30 +1,27 @@
 package com.htuy.jnet.agents
 
-import com.htuy.jnet.messages.LifecycleHandler
 import com.htuy.jnet.messages.MessageHandler
-import com.htuy.jnet.messages.NullHandlerFactory
-import com.htuy.kt.stuff.Factory
 import com.htuy.kt.stuff.LOGGER
 import io.netty.bootstrap.ServerBootstrap
-import io.netty.channel.Channel
-import io.netty.channel.ChannelFuture
-import io.netty.channel.ChannelInitializer
-import io.netty.channel.ChannelOption
+import io.netty.channel.*
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.serialization.ClassResolvers
 import io.netty.handler.codec.serialization.ObjectDecoder
 import io.netty.handler.codec.serialization.ObjectEncoder
+import java.util.*
+import kotlin.collections.ArrayList
 
 class Server(val port: Int,
-             val messageHandles: Factory<List<MessageHandler>>,
-             val initFunction: Factory<LifecycleHandler> = NullHandlerFactory,
-             val cleanupFunction: Factory<LifecycleHandler> = NullHandlerFactory,
+             val messageHandlesMaker: () -> List<MessageHandler>,
+             val initFunctionMaker: () -> (ChannelHandlerContext) -> Unit = {{}},
+             val cleanupFunctionMaker: () -> (ChannelHandlerContext) -> Unit = {{}},
              val password: String = "ADMINPASS123") {
-    var channel : Channel? = null
+    var channel: Channel? = null
     val bossGroup = NioEventLoopGroup()
     val workerGroup = NioEventLoopGroup()
+    val installAfterPairs : MutableCollection<Triple<String,String,() -> ChannelHandler>> = Collections.synchronizedList(ArrayList())
 
     fun connect(): ChannelFuture {
 
@@ -34,16 +31,19 @@ class Server(val port: Int,
                 .childHandler(object : ChannelInitializer<SocketChannel>() {
                     @Throws(Exception::class)
                     public override fun initChannel(ch: SocketChannel) {
-                        ch.pipeline()
-                                .addLast(ObjectEncoder(),
-                                         ObjectDecoder(ClassResolvers.weakCachingResolver(null)),
-                                         HandshakeManager(
-                                                 ConnectionManager(
-                                                         messageHandles.getInstance(),
-                                                         initFunction.getInstance(),
-                                                         cleanupFunction.getInstance()),
-                                                 true,
-                                                 password))
+                        ch.pipeline().addLast("encoder", ObjectEncoder())
+                                .addLast("decoder", ObjectDecoder(ClassResolvers.weakCachingResolver(null)))
+                                .addAfter("decoder", "main",
+                                          HandshakeManager(
+                                                  ConnectionManager(
+                                                          messageHandlesMaker(),
+                                                          initFunctionMaker(),
+                                                          cleanupFunctionMaker()),
+                                                  true,
+                                                  password))
+                        for(elt in installAfterPairs){
+                            ch.pipeline().addAfter(elt.first,elt.second,elt.third())
+                        }
                     }
                 })
                 .option(ChannelOption.SO_BACKLOG, 128)
@@ -61,8 +61,14 @@ class Server(val port: Int,
         }
     }
 
+    fun installAfter(installAfter : String, installAs : String, toInstall: () -> ChannelHandler) {
+        installAfterPairs.add(Triple(installAfter,installAs,toInstall))
+    }
+
     fun shutdown() {
+        LOGGER.warn{"Server shutting down."}
         bossGroup.shutdownGracefully()
         workerGroup.shutdownGracefully()
+        channel?.close()
     }
 }
