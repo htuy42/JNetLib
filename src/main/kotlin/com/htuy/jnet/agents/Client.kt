@@ -25,9 +25,10 @@ class Client(val hostAddr: String,
              val password: String = "ADMINPASS123") {
 
     var channel: Channel? = null
+    val workerGroup = NioEventLoopGroup()
+
 
     fun connect(): ChannelFuture {
-        val workerGroup = NioEventLoopGroup()
         val b = Bootstrap()
         b.group(workerGroup)
         b.channel(NioSocketChannel::class.java)
@@ -57,13 +58,17 @@ class Client(val hostAddr: String,
     fun sendMessage(message: Message) {
         LOGGER.trace { "Sending message $message" }
         val send = channel?.pipeline()?.writeAndFlush(message)
-                ?: throw IllegalStateException("Channel not yet ready. Sync if you are not doing so.")
+                ?: throw IllegalStateException("Channel not yet ready. Connect, if you are not doing so.")
 
         if (!send.sync().isSuccess) {
             LOGGER.trace { "Message send failed" }
         } else {
             LOGGER.trace { "Message send success" }
         }
+    }
+
+    fun shutdown(){
+        workerGroup.shutdownGracefully()
     }
 }
 

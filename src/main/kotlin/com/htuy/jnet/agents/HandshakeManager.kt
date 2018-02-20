@@ -1,5 +1,7 @@
 package com.htuy.jnet.agents
 
+import com.htuy.jnet.messages.ErrorMessage
+import com.htuy.jnet.messages.ErrorType
 import com.htuy.jnet.messages.HandshakeMessage
 import com.htuy.kt.stuff.LOGGER
 import io.netty.channel.ChannelHandlerContext
@@ -14,7 +16,6 @@ class HandshakeManager(val replacement: ChannelInboundHandlerAdapter,
                        val isServer: Boolean,
                        val password: String)
     : ChannelInboundHandlerAdapter() {
-    companion object : KLogging()
 
     override fun channelRead(ctx: ChannelHandlerContext,
                              msg: Any) {
@@ -30,11 +31,14 @@ class HandshakeManager(val replacement: ChannelInboundHandlerAdapter,
                 } else {
                     LOGGER.error { "Invalid pw expressed by remote client." }
                     LOGGER.error { "Our pw was " + password + " and theirs was " + msg.password }
+                    ctx.channel().writeAndFlush(msg)
                     ctx.channel()
                             .close()
                 }
             } else {
-                throw IllegalStateException("Handshake manager not paired with a handshake manager on the other side.")
+                LOGGER.error("Got non-handshake message to the handshake manager.")
+                ctx.channel().writeAndFlush(ErrorMessage(ErrorType.BAD_HANDSHAKE,"Must handshake before doing anything else!"))
+                ctx.close()
             }
         } else {
             msg as HandshakeMessage
@@ -42,8 +46,10 @@ class HandshakeManager(val replacement: ChannelInboundHandlerAdapter,
                 LOGGER.debug { "Received confirmation message. Replacing into pipeline." }
                 ctx.pipeline()
                         .replace(this, "handler", replacement)
+                replacement.channelActive(ctx)
             } else {
-                LOGGER.error { "Received unexpected handshake message that is not confirmed from remote host." }
+                LOGGER.error { "Received unexpected handshake message that is not confirmed from remote host. Probably used wrong password" }
+                throw IllegalStateException("Received unexpected handshake message that is not confirmed from remote host. Probably used wrong password")
             }
         }
         ReferenceCountUtil.release(msg)
@@ -57,5 +63,11 @@ class HandshakeManager(val replacement: ChannelInboundHandlerAdapter,
         }
         super.channelActive(ctx)
     }
+
+    override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
+        LOGGER.error{"Got error, closing context"}
+        ctx.channel().close()
+    }
 }
+
 

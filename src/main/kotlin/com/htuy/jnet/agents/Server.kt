@@ -23,9 +23,11 @@ class Server(val port: Int,
              val cleanupFunction: Factory<LifecycleHandler> = NullHandlerFactory,
              val password: String = "ADMINPASS123") {
     var channel : Channel? = null
+    val bossGroup = NioEventLoopGroup()
+    val workerGroup = NioEventLoopGroup()
+
     fun connect(): ChannelFuture {
-        val bossGroup = NioEventLoopGroup()
-        val workerGroup = NioEventLoopGroup()
+
         val b = ServerBootstrap()
         b.group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel::class.java)
@@ -60,8 +62,7 @@ class Server(val port: Int,
     }
 
     fun shutdown() {
-        channel?.close() ?: throw IllegalStateException("Trying to shutdown before open finished conclusively, or to shutdown " +
-                                                                "an already closed server")
-        channel = null
+        bossGroup.shutdownGracefully()
+        workerGroup.shutdownGracefully()
     }
 }

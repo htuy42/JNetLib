@@ -2,6 +2,7 @@ learn gradle
 clean things up
 logging
 write tests
+heartbeat handler
 handle remote shutdown properly (it doesn't seem to actually work)
 finish the FrameHandler framework
 work with remotes that can run multiple threads to process faster

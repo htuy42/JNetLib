@@ -4,7 +4,7 @@ import java.io.Serializable
 
 sealed class Message : Serializable
 
-class ModuleMessage(val moduleNames: List<String>) : Message()
+data class ModuleMessage(val moduleNames: List<String>) : Message()
 data class HandshakeMessage(val password: String,
                             val confirmed: Boolean = false) : Message() {
     fun confirm(): HandshakeMessage {
@@ -22,11 +22,13 @@ data class SubWorkMessage(val subWork: WorkSubunit,
 
 
 data class ErrorMessage(val error: ErrorType,
-                        val description: String)
+                        val description: String) : Message()
 
 
 enum class ErrorType {
-    MODULE_NOT_INSTALLED
+    MODULE_NOT_INSTALLED,
+
+    BAD_HANDSHAKE
 }
 
 data class LifecycleMessave(val event: LifecycleEvent)
