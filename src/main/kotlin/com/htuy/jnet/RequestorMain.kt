@@ -1,9 +1,12 @@
 package com.htuy.jnet
 
 import com.htuy.jnet.agents.Client
+import com.htuy.jnet.agents.ConnectionManager
 import com.htuy.jnet.messages.*
 import com.htuy.jnet.modules.ModuleManager
 import com.htuy.jnet.modules.SiteInstaller
+import com.htuy.jnet.protocol.ProtocolBuilder
+import com.htuy.jnet.protocol.STANDARD_CLIENT_PROTOCOL
 import com.htuy.kt.stuff.REPL
 import com.htuy.kt.stuff.StringCommandsRegistry
 
@@ -47,14 +50,11 @@ fun runRequestorREPL(client: Client) {
 fun main(args: Array<String>) {
     val hostAddr: String = args[0]
     val port: Int = args[1].toInt()
-    val password = args[2]
-
-
     val client = Client(hostAddr,
                         port,
-                        listOf(GenericErrorHandler(),
-                               RequestWorkReceipt({ println(it.answer.toString()) })),
-                        password = password)
+                        STANDARD_CLIENT_PROTOCOL,
+                        ConnectionManager(listOf(GenericErrorHandler(),
+                                                     RequestWorkReceipt({ println(it.answer.toString()) }))))
     client.connect()
             .sync()
     runRequestorREPL(client)

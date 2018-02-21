@@ -12,6 +12,8 @@ data class HandshakeMessage(val password: String,
     }
 }
 
+data class FrameMessage(val hash : String, val frame : Any?)
+
 data class LogMessage(val log : String) : Message()
 
 data class WorkMessage(val work: WorkBlock,

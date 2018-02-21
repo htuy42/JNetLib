@@ -1,6 +1,9 @@
 package com.htuy.jnet.agents
 
-import com.htuy.jnet.messages.*
+import com.htuy.jnet.messages.Message
+import com.htuy.jnet.messages.MessageHandler
+import com.htuy.jnet.protocol.Protocol
+import com.htuy.jnet.protocol.ProtocolBuilder
 import com.htuy.kt.stuff.LOGGER
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.*
@@ -10,21 +13,18 @@ import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.codec.serialization.ClassResolvers
 import io.netty.handler.codec.serialization.ObjectDecoder
 import io.netty.handler.codec.serialization.ObjectEncoder
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.launch
-import java.util.logging.Logger
+import java.util.*
 
 class Client(val hostAddr: String,
              val port: Int,
-             val messageHandles: List<MessageHandler>,
-             val initFunction: (ChannelHandlerContext) -> Unit = {},
-             val cleanupFunction: (ChannelHandlerContext) -> Unit = {},
-             val password: String = "ADMINPASS123",
-             val heartbeatFrequencyMillis : Int = -1) {
+             val protocol: Protocol = ProtocolBuilder(),
+             val lastHandler: ChannelHandler? = null,
+             val lastHandlerList : List<MessageHandler>? = null) {
 
     var channel: Channel? = null
-    val workerGroup = NioEventLoopGroup()
-
+    private val workerGroup = NioEventLoopGroup()
+    private val installAfterPairs: MutableCollection<Triple<String, String, ChannelHandler>> = Collections.synchronizedList(
+            ArrayList())
 
     fun connect(): ChannelFuture {
         val b = Bootstrap()
@@ -33,37 +33,34 @@ class Client(val hostAddr: String,
         b.option(ChannelOption.SO_KEEPALIVE, true)
         b.handler(object : ChannelInitializer<SocketChannel>() {
             override fun initChannel(ch: SocketChannel) {
-                ch.pipeline()
-                        .addLast(ObjectDecoder(ClassResolvers.weakCachingResolver(null)),
-                                 ObjectEncoder(),
-                                 HandshakeManager(ConnectionManager(messageHandles, initFunction, cleanupFunction),
-                                                  false,
-                                                  password))
+                ch.pipeline().addLast("decoder",ObjectDecoder(ClassResolvers.weakCachingResolver(null)))
+                        .addLast("encoder",ObjectEncoder())
+                for (elt in installAfterPairs) {
+                    ch.pipeline().addAfter(elt.first, elt.second, elt.third)
+                }
+                if (lastHandler != null) {
+                    ch.pipeline().addLast(lastHandler)
+                } else if(lastHandlerList != null){
+                    ch.pipeline().addLast(ConnectionManager(lastHandlerList))
+                }
             }
+
         })
         LOGGER.debug { "Attempting connect to $hostAddr $port" }
-        val res = b.connect(hostAddr, port)
-                .sync()
+        protocol.installToClient(b, this)
+        val res = b.connect(hostAddr, port).sync()
         if (res.isSuccess) {
             LOGGER.debug { "Connect succeeded" }
         } else {
-            LOGGER.error("Connect failed ith some error. Channel failure : $res")
+            LOGGER.error("Connect failed with some error. Channel failure : $res")
         }
         channel = res.channel()
-        if(heartbeatFrequencyMillis != -1){
-            startHeartbeats()
-        }
+        protocol.clientActive(res.channel(), this)
         return res
     }
 
-    fun startHeartbeats(){
-        launch {
-            while(channel?.isOpen ?: false){
-                delay(heartbeatFrequencyMillis)
-                LOGGER.trace{"Sending heartbeat"}
-                sendMessage(HeartbeatMessage())
-            }
-        }
+    fun installAfter(after: String, installAs: String, toInstall: ChannelHandler) {
+        installAfterPairs.add(Triple(after, installAs, toInstall))
     }
 
     fun sendMessage(message: Message) {
@@ -78,7 +75,11 @@ class Client(val hostAddr: String,
         }
     }
 
-    fun shutdown(){
+    fun shutdown() {
+        val chan = channel
+        if (chan != null) {
+            protocol.clientDeath(chan, this)
+        }
         workerGroup.shutdownGracefully()
         channel?.close()
     }

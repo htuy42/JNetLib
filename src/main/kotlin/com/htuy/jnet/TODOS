@@ -1,4 +1,6 @@
 a | is half an x!
+and 2 of them is a note!
+
 [x]learn gradle
 [x]clean things up
 [x]logging
@@ -11,7 +13,8 @@ a | is half an x!
 [x]check for module on disk as well before remote fetching (and update command which doesn't do this)
 [x]lifecycle control commands
 [x]move stuff to plain lambdas where applicable
-[ ]look at the interface for non-commandline users
+[x]look at the interface for non-commandline users || seems good :)
+[ ]make handshake, heartbeat, and frame part of some concept of a protocol, which can be installed into both a server and a client
 [ ]write spinup script
 [ ]deploy to a pi
 [ ]multiple pis, if desirable

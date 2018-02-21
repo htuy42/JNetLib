@@ -7,8 +7,8 @@ import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.util.ReferenceCountUtil
 
 class ConnectionManager(private val handles: List<MessageHandler>,
-                        private val initFunction: (ChannelHandlerContext) -> Unit,
-                        private val cleanupFunction: (ChannelHandlerContext) -> Unit) : ChannelInboundHandlerAdapter() {
+                        private val initFunction: (ChannelHandlerContext) -> Unit = {},
+                        private val cleanupFunction: (ChannelHandlerContext) -> Unit = {}) : ChannelInboundHandlerAdapter() {
 
 
     override fun channelInactive(ctx: ChannelHandlerContext) {

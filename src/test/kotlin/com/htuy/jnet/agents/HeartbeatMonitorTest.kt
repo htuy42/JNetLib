@@ -1,6 +1,7 @@
 package com.htuy.jnet.agents
 
-import com.htuy.kt.stuff.SingletonFactory
+import com.htuy.jnet.protocol.ProtocolBuilder
+import com.htuy.jnet.protocol.STANDARD_WORKER_PROTOCOL
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -12,7 +13,7 @@ internal class HeartbeatMonitorTest{
 
     @BeforeEach
     fun setUp() {
-        remote = Server(1234, SingletonFactory(listOf(EchoHandler())))
+        remote = Server(1234, STANDARD_WORKER_PROTOCOL, lastHandlerList = {listOf(EchoHandler())})
         remote?.connect()
     }
 
@@ -23,11 +24,9 @@ internal class HeartbeatMonitorTest{
 
     @Test
     fun normalFunctioning(){
-        val client = Client("localhost",1234,listOf(),heartbeatFrequencyMillis = 500)
+        val client = Client("localhost", 1234, STANDARD_WORKER_PROTOCOL,lastHandlerList = listOf())
         Thread.sleep(100)
-        remote?.installAfter("decoder","heartbeat",SingletonFactory(HeartbeatMonitor(1500)))
         val future = client.connect()
-
         Thread.sleep(8000)
         assertTrue(future.channel().isOpen)
         client.shutdown()
@@ -35,11 +34,9 @@ internal class HeartbeatMonitorTest{
 
     @Test
     fun shutdownFunctioning(){
-        val client = Client("localhost",1234,listOf(),heartbeatFrequencyMillis = 1600)
+        val client = Client("localhost",1234,ProtocolBuilder().withHeartbeat(1600),lastHandlerList = listOf())
         Thread.sleep(100)
-        remote?.installAfter("decoder","heartbeat",SingletonFactory(HeartbeatMonitor(1500)))
         val future = client.connect()
-
         Thread.sleep(8000)
         assertFalse(future.channel().isOpen)
         client.shutdown()
