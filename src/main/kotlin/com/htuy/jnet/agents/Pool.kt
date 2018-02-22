@@ -76,26 +76,28 @@ class Pool(val workerPort: Int,
 
     fun WorkerDeathFactory(): (ChannelHandlerContext) -> Unit {
         return {
-                                          LOGGER.warn { "Worker disconnected from the pool" }
-                                          val id = it.channel()
-                                                  .id()
-                                          lock.lock()
-                                          workers.remove(it.channel().id(), it.channel())
-                                          workNotAssigned.addAll(workInProgress.get(id))
-                                          workInProgress.removeAll(id)
-                                          lock.unlock()
-                                          notifyWorkAvailable()
-                                      }
+            LOGGER.warn { "Worker disconnected from the pool" }
+            val id = it.channel()
+                    .id()
+            lock.lock()
+            workers.remove(id)
+            workNotAssigned.addAll(workInProgress.get(id))
+            workInProgress.removeAll(id)
+            workerPower.remove(id)
+            freeWorkers.removeAll(listOf(id))
+            lock.unlock()
+            notifyWorkAvailable()
+        }
     }
 
     fun WorkerLifeFactory(): (ChannelHandlerContext) -> Unit {
         return {
-                                          LOGGER.warn { "New worker connected to the pool." }
-                                          installCurrentModulesToWorker(it.channel())
-                                          workers[it.channel().id()] = it.channel()
-                                          workerPower[it.channel().id()] = 1
-                                          assignWorkIfAvailable(it.channel().id())
-                                      }
+            LOGGER.warn { "New worker connected to the pool." }
+            installCurrentModulesToWorker(it.channel())
+            workers[it.channel().id()] = it.channel()
+            workerPower[it.channel().id()] = 1
+            assignWorkIfAvailable(it.channel().id())
+        }
     }
 
 
@@ -206,6 +208,14 @@ class Pool(val workerPort: Int,
     private fun assignWork(id: ChannelId,
                            work: WorkSubunit) {
         LOGGER.trace { "Performing work assign for ${id.asShortText()}" }
+        if (workers[id] == null) {
+            LOGGER.error { "Worker didn't exist. Dropping work back into q and dropping worker." }
+            workNotAssigned.add(work)
+            workers.remove(id)
+            workInProgress.get(id).clear()
+            workInProgress.removeAll(id)
+            return
+        }
         workInProgress.put(id, work)
         workers[id]?.writeAndFlush(SubWorkMessage(work)) ?: throw IllegalStateException("Tried to assign work to " +
                                                                                                 "a worker that doesn't exist")

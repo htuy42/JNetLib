@@ -7,22 +7,24 @@ and 2 of them is a note!
 [|]write tests
 [x]heartbeat handler
 [x]handle remote shutdown properly tentatively yes, but look for future issues
-[x]finish the FrameHandler framework
+[ ]finish the FrameHandler framework
 [x]work with remotes that can run multiple threads to process faster
 [ ]find a better way to handle the actual writing of modules & reduce the required size of the modules || this seems best held until I actually start writing some modules and see what I want
 [x]check for module on disk as well before remote fetching (and update command which doesn't do this)
 [x]lifecycle control commands
 [x]move stuff to plain lambdas where applicable
 [x]look at the interface for non-commandline users || seems good :)
-[x]make handshake, heartbeat, and frame part of some concept of a protocol, which can be installed into both a server and a client || I actually undid this. It wound up being a mess.
+[x]make runnable jar that handles all 3 agents (pool, client, server)
+||see end! [x]make handshake, heartbeat, and frame part of some concept of a protocol, which can be installed into both a server and a client || I actually undid this. It wound up being a mess.
 [ ]logging is currently insufficient
+|| it runs on department computer without issue at present
 [ ]write spinup script
 [ ]deploy to a pi
 [ ]multiple pis, if desirable
-[ ]look into making a web interface for it from site
+[ ]look into making a web interface for it from site || not going to do
 [ ]is it possible to write as an executor service (ie just some abstract thing that takes in a list of callables and does them)?
 would probably need to package the relevant code at runtime, deploy to site, setup a pool, launch several workers, install the code to them,
-and then begin running as a normal service, might be impossible
+and then begin running as a normal service, might be impossible || reserved for future. Interesting, but ought to move to present projects
 [ ]clean things up again
 [ ]write more tests
 

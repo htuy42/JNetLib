@@ -12,7 +12,6 @@ import java.util.concurrent.Executors
 fun WorkerMain(args : Array<String>){
     val hostAddr: String = args[0]
     val port: Int = args[1].toInt()
-    val password = args[2]
     val moduleManager = ModuleManager("modules/", SiteInstaller())
     val numProcessors = Runtime.getRuntime().availableProcessors()
     val pool = Executors.newFixedThreadPool(numProcessors)
@@ -23,7 +22,7 @@ fun WorkerMain(args : Array<String>){
 
     val worker = Client(hostAddr, port, messageHandles, initFunction = {ctx ->
         ctx.writeAndFlush(WorkerPowerMessage(numProcessors))
-    }, password = password)
+    }, password = "ADMINPASS123")
     worker.connect()
             .sync()
             .channel()

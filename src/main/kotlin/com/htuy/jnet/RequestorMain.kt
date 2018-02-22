@@ -46,14 +46,13 @@ fun runRequestorREPL(client: Client) {
 fun ClientMain(args : Array<String>){
     val hostAddr: String = args[0]
     val port: Int = args[1].toInt()
-    val password = args[2]
 
 
     val client = Client(hostAddr,
                         port,
                         listOf(GenericErrorHandler(),
                                RequestWorkReceipt({ println(it.answer.toString()) })),
-                        password = password)
+                        password = "ADMINPASS123")
     client.connect()
             .sync()
     runRequestorREPL(client)
