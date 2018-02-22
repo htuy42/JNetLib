@@ -74,7 +74,7 @@ class Server(val port: Int,
         channel?.close()
     }
 
-    fun sendMessage(toSend: Message) {
-        channel?.writeAndFlush(toSend) ?: throw IllegalStateException("Tried to send a message before the server was properly initialized.")
+    fun sendMessage(chan : Channel, toSend: Message) {
+        chan.writeAndFlush(toSend) ?: throw IllegalStateException("Tried to send a message before the server was properly initialized.")
     }
 }

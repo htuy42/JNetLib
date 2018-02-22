@@ -15,7 +15,6 @@ import java.time.Instant
 val HEARTBEAT_MISSES_ALLOWABLE = 3
 
 class HeartbeatProtocol(val frequencyMillis : Int) : Protocol{
-
     val allowedDelay = frequencyMillis * HEARTBEAT_MISSES_ALLOWABLE
     var lastHeartbeat : Long = 0
     override fun installToServer(bootstrap: ServerBootstrap, server: Server) {

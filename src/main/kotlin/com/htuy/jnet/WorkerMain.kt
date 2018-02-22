@@ -6,7 +6,7 @@ import com.htuy.jnet.messages.*
 import com.htuy.jnet.modules.ModuleManager
 import com.htuy.jnet.modules.ModuleMessageLoadHandler
 import com.htuy.jnet.modules.SiteInstaller
-import com.htuy.jnet.protocol.STANDARD_WORKER_PROTOCOL
+import com.htuy.jnet.protocol.WORKER_TO_POOL_PROTOCOL
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -21,7 +21,7 @@ fun main(args: Array<String>) {
                                                       MultiDoRequestedWorkHandler(pool))
 
 
-    val worker = Client(hostAddr, port, STANDARD_WORKER_PROTOCOL,ConnectionManager(messageHandles))
+    val worker = Client(hostAddr, port, WORKER_TO_POOL_PROTOCOL,ConnectionManager(messageHandles))
     worker.connect()
             .sync()
             .channel()

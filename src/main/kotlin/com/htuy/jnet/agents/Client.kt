@@ -25,6 +25,8 @@ class Client(val hostAddr: String,
     private val workerGroup = NioEventLoopGroup()
     private val installAfterPairs: MutableCollection<Triple<String, String, ChannelHandler>> = Collections.synchronizedList(
             ArrayList())
+    private val installBeforePairs: MutableCollection<Triple<String, String, ChannelHandler>> = Collections.synchronizedList(
+            ArrayList())
 
     fun connect(): ChannelFuture {
         val b = Bootstrap()
@@ -37,6 +39,9 @@ class Client(val hostAddr: String,
                         .addLast("encoder",ObjectEncoder())
                 for (elt in installAfterPairs) {
                     ch.pipeline().addAfter(elt.first, elt.second, elt.third)
+                }
+                for(elt in installBeforePairs) {
+                    ch.pipeline().addBefore(elt.first,elt.second,elt.third)
                 }
                 if (lastHandler != null) {
                     ch.pipeline().addLast(lastHandler)
@@ -61,6 +66,10 @@ class Client(val hostAddr: String,
 
     fun installAfter(after: String, installAs: String, toInstall: ChannelHandler) {
         installAfterPairs.add(Triple(after, installAs, toInstall))
+    }
+
+    fun installBefore(before : String, installAs : String, toInstall : ChannelHandler){
+        installBeforePairs.add(Triple(before, installAs, toInstall))
     }
 
     fun sendMessage(message: Message) {

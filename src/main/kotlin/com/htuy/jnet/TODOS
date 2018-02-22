@@ -7,14 +7,14 @@ and 2 of them is a note!
 [|]write tests
 [x]heartbeat handler
 [x]handle remote shutdown properly tentatively yes, but look for future issues
-[ ]finish the FrameHandler framework
+[x]finish the FrameHandler framework
 [x]work with remotes that can run multiple threads to process faster
-[ ]find a better way to handle the actual writing of modules & reduce the required size of the modules
+[ ]find a better way to handle the actual writing of modules & reduce the required size of the modules || this seems best held until I actually start writing some modules and see what I want
 [x]check for module on disk as well before remote fetching (and update command which doesn't do this)
 [x]lifecycle control commands
 [x]move stuff to plain lambdas where applicable
 [x]look at the interface for non-commandline users || seems good :)
-[ ]make handshake, heartbeat, and frame part of some concept of a protocol, which can be installed into both a server and a client
+[x]make handshake, heartbeat, and frame part of some concept of a protocol, which can be installed into both a server and a client
 [ ]write spinup script
 [ ]deploy to a pi
 [ ]multiple pis, if desirable

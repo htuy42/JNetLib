@@ -33,10 +33,10 @@ class HandshakeProtocol(val password: String,val postHandshakeMessage : List<Mes
     override fun installToServer(bootstrap: ServerBootstrap, server: Server) {
         server.installAfter("decoder", "handshaker", {ReadHandler { ctx, msg ->
             if (msg is HandshakeMessage && msg.password == password) {
-                server.sendMessage(msg.confirm())
+                server.sendMessage(ctx.channel(),msg.confirm())
                 ctx.pipeline().remove("handshaker")
             } else{
-                server.sendMessage(ErrorMessage(ErrorType.BAD_HANDSHAKE,"No handshake or bad handshake."))
+                server.sendMessage(ctx.channel(),ErrorMessage(ErrorType.BAD_HANDSHAKE,"No handshake or bad handshake."))
                 ctx.channel().close()
             }
             true

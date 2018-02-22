@@ -12,7 +12,7 @@ data class HandshakeMessage(val password: String,
     }
 }
 
-data class FrameMessage(val hash : String, val frame : Any?)
+data class FrameMessage(val hash : String, val frame : Any?) : Message()
 
 data class LogMessage(val log : String) : Message()
 
@@ -35,7 +35,9 @@ enum class ErrorType {
 
     BAD_HANDSHAKE,
 
-    SHUTTING_DOWN
+    SHUTTING_DOWN,
+
+    UNKNOWN_FRAME
 }
 
 data class LifecycleMessage(val event: LifecycleEvent) : Message()

@@ -1,15 +1,15 @@
 package com.htuy.jnet.agents
 
+import com.google.common.cache.CacheBuilder
 import com.google.common.collect.Multimap
 import com.google.common.collect.MultimapBuilder
 import com.google.common.collect.Queues
 import com.htuy.jnet.messages.*
 import com.htuy.jnet.modules.ModuleManager
 import com.htuy.jnet.modules.SiteInstaller
+import com.htuy.jnet.protocol.POOL_TO_WORKER_PROTOCOL
 import com.htuy.jnet.protocol.Protocol
-import com.htuy.jnet.protocol.ProtocolBuilder
 import com.htuy.jnet.protocol.STANDARD_CLIENT_PROTOCOL
-import com.htuy.jnet.protocol.STANDARD_WORKER_PROTOCOL
 import com.htuy.kt.stuff.LOGGER
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
@@ -62,9 +62,7 @@ fun ClientRequestHandlersFactory(pool: Pool): () -> ConnectionManager {
 class Pool(val workerPort: Int,
            val clientPort: Int,
            val heartbeatFrequencyClient: Int = -1,
-           val heartbeatFrequencyWorkers: Int = -1,
-           val workerProtocol: Protocol = STANDARD_WORKER_PROTOCOL,
-           val clientProtocol: Protocol = STANDARD_CLIENT_PROTOCOL) {
+           val heartbeatFrequencyWorkers: Int = -1) {
 
 
     //todo fine grained locking on the actual collections
@@ -81,6 +79,10 @@ class Pool(val workerPort: Int,
     val manager = ModuleManager("modules/", SiteInstaller())
     var workerServer: Server? = null
     var clientServer: Server? = null
+    val frameCache = CacheBuilder.newBuilder().maximumSize(5).build<String, Any>()
+
+    val workerProtocol: Protocol = POOL_TO_WORKER_PROTOCOL(frameCache::getIfPresent)
+    val clientProtocol: Protocol = STANDARD_CLIENT_PROTOCOL
 
     fun WorkerDeathFactory(): (ChannelHandlerContext) -> Unit {
         return {
@@ -118,7 +120,7 @@ class Pool(val workerPort: Int,
                                        { HeartbeatMonitor(heartbeatFrequencyWorkers) })
         }
 
-        clientServer = Server(clientPort, clientProtocol,ClientRequestHandlersFactory(this))
+        clientServer = Server(clientPort, clientProtocol, ClientRequestHandlersFactory(this))
         if (heartbeatFrequencyClient != -1) {
             workerServer?.installAfter("decoder",
                                        "heartbeat",
@@ -185,11 +187,8 @@ class Pool(val workerPort: Int,
             currentWorkPair?.owner?.writeAndFlush(currentWorkResponse)
                     ?: throw IllegalStateException("Issue with concurreny in all done check")
             workDone.clear()
-            currentWorkPair = workQueue.poll()
-            if (currentWorkPair != null) {
-                val newWork = currentWorkPair?.block?.splitWork()
-                        ?: throw IllegalArgumentException("Work split to null list")
-                workNotAssigned.addAll(newWork)
+            if (!workQueue.isEmpty()) {
+                beginNewWork()
                 newPair = true
             }
         }
@@ -246,15 +245,24 @@ class Pool(val workerPort: Int,
         }
     }
 
+    private fun beginNewWork() {
+        LOGGER.debug { "Beginning new work" }
+        assertNothingDoing()
+        currentWorkPair = workQueue.poll()
+        val work = currentWorkPair?.block
+                ?: throw IllegalStateException("Work was empty but still called begin new work.")
+        workNotAssigned.addAll(work.splitWork())
+        frameCache.put(work.frame.shaHashToString(),work.frame)
+    }
+
     fun handleNewWorkRequest(ctx: ChannelHandlerContext,
                              work: WorkBlock) {
         lock.lock()
         LOGGER.debug("Got new work request of types ${work.modulesRequired.joinToString(" ")}")
         if (currentWorkPair == null) {
+            workQueue.add(WorkPair(work, ctx.channel()))
             LOGGER.debug { "Was free, so using as current work." }
-            assertNothingDoing()
-            currentWorkPair = WorkPair(work, ctx.channel())
-            workNotAssigned.addAll(work.splitWork())
+            beginNewWork()
             lock.unlock()
             notifyWorkAvailable()
             return
