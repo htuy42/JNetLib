@@ -1,6 +1,7 @@
 package com.htuy.jnet.modules
 
 import com.htuy.jnet.messages.WorkMessage
+import com.htuy.kt.stuff.LOGGER
 import kotlin.reflect.full.primaryConstructor
 
 interface Module {
@@ -42,14 +43,18 @@ fun installModuleIfNeeded(moduleName: String,
                           installer: ModuleInstaller,
                           pathToModules: String,
                           update : Boolean) {
+    LOGGER.debug{"Check installing modules"}
     if(update){
         installer.update(moduleName,pathToModules)
     }
     else if(!checkForModule(moduleName)){
+        LOGGER.debug{"Performing actual install"}
         installer.install(moduleName, pathToModules)
         if (!checkForModule(moduleName)) {
             throw IllegalStateException("Failed to install module $moduleName")
         }
+    } else{
+        LOGGER.debug{"already had module"}
     }
 
 }

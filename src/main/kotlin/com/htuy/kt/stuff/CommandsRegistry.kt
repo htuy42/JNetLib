@@ -17,7 +17,7 @@ open class AnyCommandsRegistry <T> : CommandsRegistry<T> {
                 return
             }
         }
-        throw IllegalArgumentException()
+        println("Didn't know how to handle that input. Perhaps there was a typo?")
     }
 }
 

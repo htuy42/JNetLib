@@ -12,6 +12,7 @@ class ModuleMessageLoadHandler(val manager: ModuleManager)
     override var cleanupRequired = false
     override fun handle(ctx: ChannelHandlerContext,
                         msg: Any?) {
+
         msg as ModuleMessage
         manager.loadAsNeeded(msg.moduleNames,msg.update)
     }

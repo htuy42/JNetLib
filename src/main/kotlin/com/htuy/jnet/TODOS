@@ -14,7 +14,8 @@ and 2 of them is a note!
 [x]lifecycle control commands
 [x]move stuff to plain lambdas where applicable
 [x]look at the interface for non-commandline users || seems good :)
-[x]make handshake, heartbeat, and frame part of some concept of a protocol, which can be installed into both a server and a client
+[x]make handshake, heartbeat, and frame part of some concept of a protocol, which can be installed into both a server and a client || I actually undid this. It wound up being a mess.
+[ ]logging is currently insufficient
 [ ]write spinup script
 [ ]deploy to a pi
 [ ]multiple pis, if desirable

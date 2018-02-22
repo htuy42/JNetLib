@@ -1,7 +1,6 @@
 package com.htuy.jnet.agents
 
 import com.htuy.jnet.messages.*
-import com.htuy.jnet.protocol.ProtocolBuilder
 import io.netty.channel.ChannelHandlerContext
 import kotlinx.coroutines.experimental.channels.Channel
 import kotlinx.coroutines.experimental.delay
@@ -19,7 +18,7 @@ internal class ConnectionManagerTest {
 
     @BeforeEach
     fun setUp() {
-        remote = Server(1234, ProtocolBuilder(), {ConnectionManager(listOf(EchoHandler()))})
+        remote = Server(1234, {listOf(EchoHandler())})
         remote?.connect()
     }
 
@@ -43,7 +42,7 @@ internal class ConnectionManagerTest {
     @Test
     fun channelRead() = runBlocking<Unit> {
         val received = LinkedBlockingQueue<Message>()
-        val client = Client("localhost",1234,ProtocolBuilder(), lastHandlerList = listOf(AllHandler{
+        val client = Client("localhost",1234,listOf(AllHandler{
             received.add(it as Message)
         }))
         client.connect()
