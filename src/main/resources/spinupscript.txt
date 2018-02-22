@@ -1,0 +1,9 @@
+<username>
+###_SLEEP:3000
+<password>
+###_SLEEP:2000
+cd dev
+###_SLEEP:250
+cd jnet
+###_SLEEP:250
+java -jar jnet-1.0-SNAPSHOT.jar worker 10.38.14.145 1234

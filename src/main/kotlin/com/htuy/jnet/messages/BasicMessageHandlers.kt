@@ -43,3 +43,10 @@ fun RequestWorkReceipt(callback: (WorkMessage) -> Unit): MessageHandler {
         callback(msg)
     })
 }
+
+
+fun HealthReceipt(callback : (PoolHealthMessage) -> Unit) : MessageHandler{
+    return MessageTypeFunHandler(PoolHealthMessage::class.java) { ctx, msg ->
+        println(msg)
+    }
+}

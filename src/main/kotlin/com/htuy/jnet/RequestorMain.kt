@@ -36,6 +36,10 @@ fun runRequestorREPL(client: Client) {
         moduleManager.loadAsNeeded(input, false)
     })
 
+    registry.stringRegister("health_request",{
+        client.sendMessage(PoolHealthMessage(null,null))
+    })
+
 
     val repl = REPL(registry)
     repl.run()
@@ -51,7 +55,9 @@ fun ClientMain(args : Array<String>){
     val client = Client(hostAddr,
                         port,
                         listOf(GenericErrorHandler(),
-                               RequestWorkReceipt({ println(it.answer.toString()) })),
+                               RequestWorkReceipt({ println(it.answer.toString()) }),
+                               HealthReceipt { println(it) }
+                               ),
                         password = "ADMINPASS123")
     client.connect()
             .sync()

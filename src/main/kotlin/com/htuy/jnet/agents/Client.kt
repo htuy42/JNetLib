@@ -18,7 +18,7 @@ class Client(val hostAddr: String,
              val port: Int,
              val messageHandles: List<MessageHandler>,
              val initFunction: (ChannelHandlerContext) -> Unit = {},
-             val cleanupFunction: (ChannelHandlerContext) -> Unit = {},
+             val cleanupFunction: (ChannelHandlerContext) -> Unit = {System.exit(0)},
              val password: String = "ADMINPASS123",
              val heartbeatFrequencyMillis : Int = -1) {
 
@@ -47,7 +47,7 @@ class Client(val hostAddr: String,
         if (res.isSuccess) {
             LOGGER.debug { "Connect succeeded" }
         } else {
-            LOGGER.error("Connect failed ith some error. Channel failure : $res")
+            LOGGER.error("Connect failed with some error. Channel failure : $res")
         }
         channel = res.channel()
         if(heartbeatFrequencyMillis != -1){

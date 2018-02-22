@@ -50,6 +50,9 @@ fun ClientRequestHandlersFactory(pool: Pool): () -> List<MessageHandler> {
                     when (msg.event) {
                         LifecycleEvent.SHUTDOWN -> pool.shutdown()
                     }
+                }),
+                MessageTypeFunHandler(PoolHealthMessage::class.java, {ctx, msg ->
+                   ctx.writeAndFlush(PoolHealthMessage(pool.workers.size,pool.workerPower.values.sum()))
                 }))
     }
 }

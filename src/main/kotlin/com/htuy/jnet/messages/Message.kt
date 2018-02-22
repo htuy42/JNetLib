@@ -28,6 +28,8 @@ data class ErrorMessage(val error: ErrorType,
 
 data class WorkerPowerMessage(val amount : Int) : Message()
 
+data class PoolHealthMessage(val workerCount : Int?, val summedWorkerPower : Int?) : Message()
+
 class HeartbeatMessage : Message()
 
 enum class ErrorType {
